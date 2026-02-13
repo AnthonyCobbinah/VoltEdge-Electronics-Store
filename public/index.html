@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoltEdge Electronics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style> [x-cloak] { display: none !important; } </style>
+</head>
+<body class="bg-slate-50 font-sans" x-data="appLogic()" x-init="init()">
+
+    <nav class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-blue-400">VoltEdge</h1>
+        <div class="flex gap-4">
+            <template x-if="user">
+                <button @click="logout()" class="text-red-400 text-xs font-bold uppercase">Logout</button>
+            </template>
+            <button @click="showAdminModal = true" class="bg-blue-600 px-3 py-1 rounded text-xs font-bold">Admin</button>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <div x-show="!user && view === 'shop'" x-cloak class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-xl mt-10">
+            <h2 class="text-2xl font-bold text-center mb-6 text-slate-800">Welcome to VoltEdge</h2>
+            <div class="space-y-4">
+                <input type="text" x-model="regForm.name" placeholder="Full Name" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="tel" x-model="regForm.phone" placeholder="Phone Number" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <button @click="login()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Start Shopping</button>
+            </div>
+        </div>
+
+        <div x-show="user && view === 'shop'" x-cloak class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <template x-for="item in products" :key="item.name">
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="h-32 bg-slate-100 rounded-xl mb-3 flex items-center justify-center font-bold text-slate-400" x-text="item.name"></div>
+                            <h3 class="font-bold text-lg text-slate-800" x-text="item.name"></h3>
+                            <p class="text-blue-600 font-bold mb-4" x-text="'GH₵ ' + item.price"></p>
+                        </div>
+                        <button @click="placeOrder(item)" 
+                                :class="item.ordered ? 'bg-green-500' : 'bg-slate-900'"
+                                class="w-full text-white py-2 rounded-xl text-sm font-bold">
+                            <span x-text="item.ordered ? '✓ ORDERED' : 'ORDER NOW'"></span>
+                        </button>
+                    </div>
+                </template>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-blue-500 h-fit">
+                <h3 class="font-bold text-slate-800 mb-4 border-b pb-2 text-center">My Recent Orders</h3>
+                <div class="space-y-3">
+                    <template x-for="o in myOrders" :key="o.id">
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border">
+                            <span class="text-sm font-medium text-slate-700" x-text="o.itemName"></span>
+                            <span :class="o.confirmed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'" 
+                                  class="text-[10px] px-2 py-1 rounded-full font-bold" 
+                                  x-text="o.confirmed ? 'CONFIRMED' : 'PENDING'"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="view === 'admin'" x-cloak class="bg-white p-6 rounded-2xl shadow-2xl border max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black text-slate-800">ADMIN DASHBOARD</h2>
+                <button @click="view = 'shop'" class="text-blue-600 font-bold hover:underline">← Back to Shop</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-100 text-xs text-slate-500 uppercase">
+                            <th class="p-4">Customer</th>
+                            <th class="p-4">Phone</th>
+                            <th class="p-4">Item Ordered</th>
+                            <th class="p-4 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="o in allOrders" :key="o.id">
+                            <tr class="border-b hover:bg-slate-50 transition">
+                                <td class="p-4 font-bold text-slate-700" x-text="o.customer"></td>
+                                <td class="p-4 text-sm font-mono text-blue-600" x-text="o.phone"></td>
+                                <td class="p-4 text-sm text-slate-600" x-text="o.itemName"></td>
+                                <td class="p-4 text-center">
+                                    <button x-show="!o.confirmed" @click="confirmOrder(o.id)" class="bg-green-500 text-white px-4 py-1 rounded-full text-xs font-bold">Confirm</button>
+                                    <span x-show="o.confirmed" class="text-green-600 font-bold text-sm">✓ Ready</span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showAdminModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm">
+            <h3 class="font-bold text-xl mb-4 text-center text-slate-800">Admin Security</h3>
+            <input type="password" x-model="adminPassInput" class="w-full border p-3 rounded-xl mb-4 text-center text-2xl tracking-widest outline-blue-500">
+            <div class="flex gap-2">
+                <button @click="showAdminModal = false" class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600">Cancel</button>
+                <button @click="adminLogin()" class="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function appLogic() {
+            return {
+                view: 'shop', user: null, regForm: {name:'', phone:''},
+                showAdminModal: false, adminPassInput: '', adminSecret: null,
+                myOrders: [], allOrders: [],
+                products: [
+                    {name:'Sensors', price:180, ordered: false}, {name:'DIY Kits', price:550, ordered: false}, 
+                    {name:'256 SSD', price:320, ordered: false}, {name:'512 SSD', price:620, ordered: false},
+                    {name:'8gig DDR4 RAM', price:280, ordered: false}, {name:'16gig DDR4 RAM', price:540, ordered: false},
+                    {name:'512gig HDD', price:250, ordered: false}, {name:'HP Motherboard', price:1100, ordered: false}, 
+                    {name:'Laptop Battery', price:390, ordered: false}
+                ],
+                init() {
+                    const saved = localStorage.getItem('voltEdgeUser');
+                    if(saved) {
+                        this.user = JSON.parse(saved);
+                        this.fetchMyOrders();
+                        setInterval(() => this.pollData(), 5000);
+                    }
+                },
+                login() {
+                    if(!this.regForm.name || !this.regForm.phone) return alert("Please fill details");
+                    this.user = { ...this.regForm };
+                    localStorage.setItem('voltEdgeUser', JSON.stringify(this.user));
+                    this.fetchMyOrders();
+                    setInterval(() => this.pollData(), 5000);
+                },
+                logout() {
+                    localStorage.removeItem('voltEdgeUser');
+                    window.location.reload();
+                },
+                async placeOrder(item) {
+                    await fetch('/api/orders', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ customer: this.user.name, phone: this.user.phone, itemName: item.name })
+                    });
+                    item.ordered = true;
+                    setTimeout(() => item.ordered = false, 2000);
+                    this.fetchMyOrders();
+                },
+                async fetchMyOrders() {
+                    if(!this.user) return;
+                    const r = await fetch(`/api/my-orders/${this.user.phone}`);
+                    this.myOrders = await r.json();
+                },
+                async adminLogin() {
+                    const r = await fetch('/api/admin/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ password: this.adminPassInput })
+                    });
+                    if(r.ok) {
+                        const data = await r.json();
+                        this.adminSecret = this.adminPassInput;
+                        this.allOrders = data.orders;
+                        this.view = 'admin';
+                        this.showAdminModal = false;
+                    } else { alert("Wrong Password"); }
+                },
+                async confirmOrder(id) {
+                    await fetch(`/api/orders/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'admin-password': this.adminSecret }
+                    });
+                    this.pollData();
+                },
+                async pollData() {
+                    if(this.user) this.fetchMyOrders();
+                    if(this.view === 'admin' && this.adminSecret) {
+                        const r = await fetch('/api/admin/verify', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ password: this.adminSecret })
+                        });
+                        const data = await r.json();
+                        this.allOrders = data.orders;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
