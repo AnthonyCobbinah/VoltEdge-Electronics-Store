@@ -6,7 +6,11 @@
     <title>VoltEdge Electronics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style> [x-cloak] { display: none !important; } </style>
+    <style> 
+        [x-cloak] { display: none !important; } 
+        /* Ensures images maintain a clean aspect ratio and fill the container */
+        .product-image { object-fit: contain; width: 100%; height: 100%; }
+    </style>
 </head>
 <body class="bg-slate-50 font-sans" x-data="appLogic()" x-init="init()">
 
@@ -21,11 +25,17 @@
     </nav>
 
     <div class="container mx-auto p-4 md:p-8">
-        <div x-show="!user && view === 'shop'" x-cloak class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-xl mt-10">
+        <div x-show="!user && view === 'shop'" x-cloak class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-xl mt-10 border border-slate-200">
             <h2 class="text-2xl font-bold text-center mb-6 text-slate-800">Welcome to VoltEdge</h2>
             <div class="space-y-4">
-                <input type="text" x-model="regForm.name" placeholder="Full Name" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="tel" x-model="regForm.phone" placeholder="Phone Number" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Full Name</label>
+                    <input type="text" x-model="regForm.name" placeholder="Enter your name" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Phone Number (10+ digits)</label>
+                    <input type="tel" x-model="regForm.phone" placeholder="024XXXXXXX" class="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
                 <button @click="login()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Start Shopping</button>
             </div>
         </div>
@@ -35,16 +45,15 @@
                 <template x-for="item in products" :key="item.name">
                     <div class="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-between hover:shadow-md transition">
                         <div>
-                            <div class="h-48 bg-slate-100 rounded-xl mb-3 overflow-hidden flex items-center justify-center">
-                                <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
+                            <div class="h-48 w-full bg-white rounded-xl mb-3 overflow-hidden border border-slate-100 p-2">
+                                <img :src="item.image" :alt="item.name" class="product-image">
                             </div>
                             <h3 class="font-bold text-lg text-slate-800" x-text="item.name"></h3>
                             <p class="text-blue-600 font-bold mb-4" x-text="'GH₵ ' + item.price"></p>
                         </div>
                         <button @click="placeOrder(item)" 
-                                :class="item.ordered ? 'bg-green-500' : 'bg-slate-900'"
-                                class="w-full text-white py-2 rounded-xl text-sm font-bold">
-                            <span x-text="item.ordered ? '✓ ORDERED' : 'ORDER NOW'"></span>
+                                class="w-full bg-slate-900 text-white py-2 rounded-xl text-sm font-bold hover:bg-blue-600 transition">
+                            ORDER NOW
                         </button>
                     </div>
                 </template>
@@ -54,12 +63,18 @@
                 <h3 class="font-bold text-slate-800 mb-4 border-b pb-2 text-center">My Recent Orders</h3>
                 <div class="space-y-3">
                     <template x-for="o in myOrders" :key="o.id">
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border">
-                            <span class="text-sm font-medium text-slate-700" x-text="o.itemName"></span>
-                            <span :class="o.confirmed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'" 
-                                  class="text-[10px] px-2 py-1 rounded-full font-bold" 
-                                  x-text="o.confirmed ? 'CONFIRMED' : 'PENDING'"></span>
+                        <div class="p-3 bg-slate-50 rounded-xl border">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm font-bold text-slate-700" x-text="o.itemName"></span>
+                                <span :class="o.confirmed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'" 
+                                      class="text-[10px] px-2 py-1 rounded-full font-bold" 
+                                      x-text="o.confirmed ? 'ORDER CONFIRMED' : 'WAITING CONFIRMATION'"></span>
+                            </div>
+                            <div class="text-[10px] text-slate-400" x-text="o.timestamp"></div>
                         </div>
+                    </template>
+                    <template x-if="myOrders.length === 0">
+                        <p class="text-center text-slate-400 text-sm">No orders yet.</p>
                     </template>
                 </div>
             </div>
@@ -67,28 +82,41 @@
 
         <div x-show="view === 'admin'" x-cloak class="bg-white p-6 rounded-2xl shadow-2xl border max-w-5xl mx-auto">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black text-slate-800">ADMIN DASHBOARD</h2>
-                <button @click="view = 'shop'" class="text-blue-600 font-bold hover:underline">← Back to Shop</button>
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Orders Management</h2>
+                    <p class="text-sm text-slate-500">Manage incoming customer requests</p>
+                </div>
+                <button @click="view = 'shop'" class="bg-slate-100 px-4 py-2 rounded-lg text-slate-600 font-bold hover:bg-slate-200">← Exit Admin</button>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
+            <div class="overflow-x-auto rounded-xl border">
+                <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-100 text-xs text-slate-500 uppercase">
-                            <th class="p-4">Customer</th>
-                            <th class="p-4">Phone</th>
-                            <th class="p-4">Item Ordered</th>
+                        <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-widest">
+                            <th class="p-4">Customer Name</th>
+                            <th class="p-4">Phone Number</th>
+                            <th class="p-4">Item</th>
+                            <th class="p-4">Date & Time</th>
                             <th class="p-4 text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <template x-for="o in allOrders" :key="o.id">
-                            <tr class="border-b hover:bg-slate-50 transition">
+                            <tr class="border-b hover:bg-blue-50/50 transition">
                                 <td class="p-4 font-bold text-slate-700" x-text="o.customer"></td>
                                 <td class="p-4 text-sm font-mono text-blue-600" x-text="o.phone"></td>
-                                <td class="p-4 text-sm text-slate-600" x-text="o.itemName"></td>
+                                <td class="p-4 text-sm text-slate-600">
+                                    <span class="bg-slate-100 px-2 py-1 rounded" x-text="o.itemName"></span>
+                                </td>
+                                <td class="p-4 text-[12px] text-slate-500" x-text="o.timestamp"></td>
                                 <td class="p-4 text-center">
-                                    <button x-show="!o.confirmed" @click="confirmOrder(o.id)" class="bg-green-500 text-white px-4 py-1 rounded-full text-xs font-bold">Confirm</button>
-                                    <span x-show="o.confirmed" class="text-green-600 font-bold text-sm">✓ Ready</span>
+                                    <button x-show="!o.confirmed" @click="confirmOrder(o.id)" 
+                                            class="bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:shadow-lg">
+                                        Confirm Order
+                                    </button>
+                                    <span x-show="o.confirmed" class="text-green-600 font-bold text-sm flex items-center justify-center gap-1">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                                        Confirmed
+                                    </span>
                                 </td>
                             </tr>
                         </template>
@@ -100,8 +128,8 @@
 
     <div x-show="showAdminModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
         <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm">
-            <h3 class="font-bold text-xl mb-4 text-center text-slate-800">Admin Security</h3>
-            <input type="password" x-model="adminPassInput" class="w-full border p-3 rounded-xl mb-4 text-center text-2xl tracking-widest outline-blue-500">
+            <h3 class="font-bold text-xl mb-4 text-center text-slate-800">Admin Access</h3>
+            <input type="password" x-model="adminPassInput" placeholder="Password" class="w-full border p-3 rounded-xl mb-4 text-center text-2xl tracking-widest outline-blue-500">
             <div class="flex gap-2">
                 <button @click="showAdminModal = false" class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600">Cancel</button>
                 <button @click="adminLogin()" class="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold">Login</button>
@@ -112,53 +140,105 @@
     <script>
         function appLogic() {
             return {
-                view: 'shop', user: null, regForm: {name:'', phone:''},
-                showAdminModal: false, adminPassInput: '', adminSecret: null,
-                myOrders: [], allOrders: [],
+                view: 'shop', 
+                user: null, 
+                regForm: {name:'', phone:''},
+                showAdminModal: false, 
+                adminPassInput: '', 
+                myOrders: [], 
+                allOrders: [],
                 products: [
-                    {name:'Sensors', price:180, ordered: false, image: 'https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=400&q=80'}, 
-                    {name:'DIY Kits', price:550, ordered: false, image: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&q=80'}, 
-                    {name:'256 SSD', price:320, ordered: false, image: 'https://images.unsplash.com/photo-1597872200919-012d9ec0410a?w=400&q=80'}, 
-                    {name:'512 SSD', price:620, ordered: false, image: 'https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=400&q=80'},
-                    {name:'8gig DDR4 RAM', price:280, ordered: false, image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?w=400&q=80'}, 
-                    {name:'16gig DDR4 RAM', price:540, ordered: false, image: 'https://images.unsplash.com/photo-1541029071515-84cc54f84dc5?w=400&q=80'},
-                    {name:'512gig HDD', price:250, ordered: false, image: 'https://images.unsplash.com/photo-1628557118391-56cd72d3e59a?w=400&q=80'}, 
-                    {name:'HP Motherboard', price:1100, ordered: false, image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80'}, 
-                    {name:'Laptop Battery', price:390, ordered: false, image: 'https://images.unsplash.com/photo-1594235372134-909244439c14?w=400&q=80'}
+                    {name:'Sensors', price:180, image: 'https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=400&q=80'}, 
+                    {name:'DIY Kits', price:550, image: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&q=80'}, 
+                    {name:'256 SSD', price:320, image: 'https://images.unsplash.com/photo-1597872200919-012d9ec0410a?w=400&q=80'}, 
+                    {name:'512 SSD', price:620, image: 'https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=400&q=80'},
+                    {name:'8gig DDR4 RAM', price:280, image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?w=400&q=80'}, 
+                    {name:'16gig DDR4 RAM', price:540, image: 'https://images.unsplash.com/photo-1541029071515-84cc54f84dc5?w=400&q=80'},
+                    {name:'512gig HDD', price:250, image: 'https://images.unsplash.com/photo-1628557118391-56cd72d3e59a?w=400&q=80'}, 
+                    {name:'HP Motherboard', price:1100, image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80'}, 
+                    {name:'Laptop Battery', price:390, image: 'https://images.unsplash.com/photo-1594235372134-909244439c14?w=400&q=80'}
                 ],
-                // ... rest of the logic (init, login, logout, placeOrder, etc.) remains identical ...
+
                 init() {
-                    const saved = localStorage.getItem('voltEdgeUser');
-                    if(saved) {
-                        this.user = JSON.parse(saved);
-                        this.fetchMyOrders();
-                        setInterval(() => this.pollData(), 5000);
+                    const savedUser = localStorage.getItem('voltEdgeUser');
+                    if(savedUser) {
+                        this.user = JSON.parse(savedUser);
                     }
+                    this.loadOrders();
+                    // Sync every 2 seconds to reflect status changes
+                    setInterval(() => this.loadOrders(), 2000);
                 },
+
                 login() {
-                    if(!this.regForm.name || !this.regForm.phone) return alert("Please fill details");
+                    // Strict Validation
+                    if(this.regForm.name.trim().length < 3) {
+                        return alert("Please enter a valid full name (at least 3 characters).");
+                    }
+                    if(!/^\d{10,15}$/.test(this.regForm.phone.trim())) {
+                        return alert("Please enter a valid phone number (at least 10 digits).");
+                    }
+
                     this.user = { ...this.regForm };
                     localStorage.setItem('voltEdgeUser', JSON.stringify(this.user));
-                    this.fetchMyOrders();
-                    setInterval(() => this.pollData(), 5000);
+                    this.loadOrders();
                 },
+
                 logout() {
                     localStorage.removeItem('voltEdgeUser');
-                    window.location.reload();
+                    this.user = null;
+                    this.myOrders = [];
                 },
-                async placeOrder(item) {
-                    // Note: Your original code had /api/orders. Ensure your backend is running.
-                    item.ordered = true;
-                    setTimeout(() => item.ordered = false, 2000);
+
+                loadOrders() {
+                    const data = localStorage.getItem('voltEdgeOrders') || '[]';
+                    this.allOrders = JSON.parse(data);
+                    
+                    if(this.user) {
+                        // Filter orders to show only the ones belonging to the current user phone number
+                        this.myOrders = this.allOrders.filter(o => o.phone === this.user.phone);
+                    }
                 },
-                async fetchMyOrders() {
-                    // Fetch logic here
+
+                placeOrder(item) {
+                    if(!this.user) return alert("Please login first");
+
+                    const newOrder = {
+                        id: Date.now(),
+                        customer: this.user.name,
+                        phone: this.user.phone,
+                        itemName: item.name,
+                        price: item.price,
+                        confirmed: false,
+                        timestamp: new Date().toLocaleString()
+                    };
+
+                    const currentOrders = JSON.parse(localStorage.getItem('voltEdgeOrders') || '[]');
+                    currentOrders.unshift(newOrder); // Add to beginning of list
+                    localStorage.setItem('voltEdgeOrders', JSON.stringify(currentOrders));
+                    
+                    this.loadOrders();
+                    alert(`Order for ${item.name} placed successfully!`);
                 },
-                async adminLogin() {
-                    // Admin login logic here
-                    if(this.adminPassInput === '1234') { // Example logic
+
+                adminLogin() {
+                    if(this.adminPassInput === '1234') { // Admin password
                         this.view = 'admin';
                         this.showAdminModal = false;
+                        this.adminPassInput = '';
+                        this.loadOrders();
+                    } else {
+                        alert("Incorrect Password");
+                    }
+                },
+
+                confirmOrder(orderId) {
+                    const currentOrders = JSON.parse(localStorage.getItem('voltEdgeOrders') || '[]');
+                    const orderIndex = currentOrders.findIndex(o => o.id === orderId);
+                    
+                    if(orderIndex !== -1) {
+                        currentOrders[orderIndex].confirmed = true;
+                        localStorage.setItem('voltEdgeOrders', JSON.stringify(currentOrders));
+                        this.loadOrders();
                     }
                 }
             }
