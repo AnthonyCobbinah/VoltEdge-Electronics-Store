@@ -8,8 +8,16 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style> 
         [x-cloak] { display: none !important; } 
-        /* Ensures images maintain a clean aspect ratio and fill the container */
-        .product-image { object-fit: contain; width: 100%; height: 100%; }
+        /* Optimized for hardware viewing */
+        .product-image { 
+            object-fit: contain; 
+            width: 100%; 
+            height: 100%; 
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .image-container {
+            background: radial-gradient(circle, #ffffff 0%, #f8fafc 100%);
+        }
     </style>
 </head>
 <body class="bg-slate-50 font-sans" x-data="appLogic()" x-init="init()">
@@ -45,7 +53,7 @@
                 <template x-for="item in products" :key="item.name">
                     <div class="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-between hover:shadow-md transition">
                         <div>
-                            <div class="h-48 w-full bg-white rounded-xl mb-3 overflow-hidden border border-slate-100 p-2">
+                            <div class="image-container h-48 w-full rounded-xl mb-3 overflow-hidden border border-slate-100 p-4">
                                 <img :src="item.image" :alt="item.name" class="product-image">
                             </div>
                             <h3 class="font-bold text-lg text-slate-800" x-text="item.name"></h3>
@@ -84,7 +92,6 @@
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Orders Management</h2>
-                    <p class="text-sm text-slate-500">Manage incoming customer requests</p>
                 </div>
                 <button @click="view = 'shop'" class="bg-slate-100 px-4 py-2 rounded-lg text-slate-600 font-bold hover:bg-slate-200">← Exit Admin</button>
             </div>
@@ -114,7 +121,6 @@
                                         Confirm Order
                                     </button>
                                     <span x-show="o.confirmed" class="text-green-600 font-bold text-sm flex items-center justify-center gap-1">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                                         Confirmed
                                     </span>
                                 </td>
@@ -148,15 +154,14 @@
                 myOrders: [], 
                 allOrders: [],
                 products: [
+                    {name:'256 SSD (Solid State)', price:320, image: 'https://images.unsplash.com/photo-1597872200919-012d9ec0410a?auto=format&fit=crop&q=80&w=400'}, 
+                    {name:'512 SSD (Solid State)', price:620, image: 'https://images.unsplash.com/photo-1544652478-6653e09f18a2?auto=format&fit=crop&q=80&w=400'},
+                    {name:'512 Hard Disk Drive', price:250, image: 'https://images.unsplash.com/photo-1628557118391-56cd72d3e59a?auto=format&fit=crop&q=80&w=400'}, 
+                    {name:'Laptop Battery (High Cap)', price:390, image: 'https://images.unsplash.com/photo-1594235372134-909244439c14?auto=format&fit=crop&q=80&w=400'},
                     {name:'Sensors', price:180, image: 'https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=400&q=80'}, 
                     {name:'DIY Kits', price:550, image: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&q=80'}, 
-                    {name:'256 SSD', price:320, image: 'https://images.unsplash.com/photo-1597872200919-012d9ec0410a?w=400&q=80'}, 
-                    {name:'512 SSD', price:620, image: 'https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=400&q=80'},
                     {name:'8gig DDR4 RAM', price:280, image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?w=400&q=80'}, 
-                    {name:'16gig DDR4 RAM', price:540, image: 'https://images.unsplash.com/photo-1541029071515-84cc54f84dc5?w=400&q=80'},
-                    {name:'512gig HDD', price:250, image: 'https://images.unsplash.com/photo-1628557118391-56cd72d3e59a?w=400&q=80'}, 
-                    {name:'HP Motherboard', price:1100, image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80'}, 
-                    {name:'Laptop Battery', price:390, image: 'https://images.unsplash.com/photo-1594235372134-909244439c14?w=400&q=80'}
+                    {name:'HP Motherboard', price:1100, image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80'}
                 ],
 
                 init() {
@@ -165,18 +170,12 @@
                         this.user = JSON.parse(savedUser);
                     }
                     this.loadOrders();
-                    // Sync every 2 seconds to reflect status changes
                     setInterval(() => this.loadOrders(), 2000);
                 },
 
                 login() {
-                    // Strict Validation
-                    if(this.regForm.name.trim().length < 3) {
-                        return alert("Please enter a valid full name (at least 3 characters).");
-                    }
-                    if(!/^\d{10,15}$/.test(this.regForm.phone.trim())) {
-                        return alert("Please enter a valid phone number (at least 10 digits).");
-                    }
+                    if(this.regForm.name.trim().length < 3) return alert("Enter valid name");
+                    if(!/^\d{10,15}$/.test(this.regForm.phone.trim())) return alert("Enter valid phone number");
 
                     this.user = { ...this.regForm };
                     localStorage.setItem('voltEdgeUser', JSON.stringify(this.user));
@@ -186,22 +185,18 @@
                 logout() {
                     localStorage.removeItem('voltEdgeUser');
                     this.user = null;
-                    this.myOrders = [];
                 },
 
                 loadOrders() {
                     const data = localStorage.getItem('voltEdgeOrders') || '[]';
                     this.allOrders = JSON.parse(data);
-                    
                     if(this.user) {
-                        // Filter orders to show only the ones belonging to the current user phone number
                         this.myOrders = this.allOrders.filter(o => o.phone === this.user.phone);
                     }
                 },
 
                 placeOrder(item) {
                     if(!this.user) return alert("Please login first");
-
                     const newOrder = {
                         id: Date.now(),
                         customer: this.user.name,
@@ -211,17 +206,15 @@
                         confirmed: false,
                         timestamp: new Date().toLocaleString()
                     };
-
                     const currentOrders = JSON.parse(localStorage.getItem('voltEdgeOrders') || '[]');
-                    currentOrders.unshift(newOrder); // Add to beginning of list
+                    currentOrders.unshift(newOrder);
                     localStorage.setItem('voltEdgeOrders', JSON.stringify(currentOrders));
-                    
                     this.loadOrders();
-                    alert(`Order for ${item.name} placed successfully!`);
+                    alert(`Order for ${item.name} placed!`);
                 },
 
                 adminLogin() {
-                    if(this.adminPassInput === '1234') { // Admin password
+                    if(this.adminPassInput === '1234') {
                         this.view = 'admin';
                         this.showAdminModal = false;
                         this.adminPassInput = '';
@@ -234,7 +227,6 @@
                 confirmOrder(orderId) {
                     const currentOrders = JSON.parse(localStorage.getItem('voltEdgeOrders') || '[]');
                     const orderIndex = currentOrders.findIndex(o => o.id === orderId);
-                    
                     if(orderIndex !== -1) {
                         currentOrders[orderIndex].confirmed = true;
                         localStorage.setItem('voltEdgeOrders', JSON.stringify(currentOrders));
