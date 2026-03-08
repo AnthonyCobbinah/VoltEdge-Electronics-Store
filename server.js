@@ -1,24 +1,25 @@
 const express = require('express');
 const path = require('path');
-const cors = require('cors'); // Added for cross-origin compatibility
+const cors = require('cors');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-// Note: In production, always set this via environment variables
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "VoltEdgeAdmin2026";
+// Note: In Render, add ADMIN_PASSWORD as an Environment Variable
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1234"; 
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Assuming your index.html is in a folder named 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory data store (resets when server restarts)
+// In-memory data store
 let orders = [];
 
 /** * API Endpoints 
  */
 
-// 1. Place a new order
+// 1. Place a new order (with Date and Time)
 app.post('/api/orders', (req, res) => {
     const { customer, phone, itemName } = req.body;
     
@@ -32,39 +33,40 @@ app.post('/api/orders', (req, res) => {
         phone, 
         itemName, 
         confirmed: false,
-        timestamp: new Date()
+        // Generates "MM/DD/YYYY, HH:MM:SS AM/PM"
+        timestamp: new Date().toLocaleString() 
     };
     
-    orders.push(newOrder);
-    console.log(`New Order: ${itemName} for ${customer}`);
+    orders.unshift(newOrder); // Add to the top of the list
+    console.log(`New Order: ${itemName} from ${customer} (${phone})`);
     res.status(201).json(newOrder);
 });
 
-// 2. Get orders for a specific customer (Phone-based tracking)
+// 2. Get orders for a specific customer (Filtered by Phone)
 app.get('/api/my-orders/:phone', (req, res) => {
     const customerPhone = req.params.phone;
     const myOrders = orders.filter(o => o.phone === customerPhone);
     res.json(myOrders);
 });
 
-// 3. Admin Login & Dashboard Data
+// 3. Admin Login & Get All Orders
 app.post('/api/admin/verify', (req, res) => {
     const { password } = req.body;
     
     if (password === ADMIN_PASSWORD) {
-        // Return all orders sorted by newest first
-        const sortedOrders = [...orders].reverse();
-        res.json({ success: true, orders: sortedOrders });
+        // Return all orders (already sorted by unshift)
+        res.json({ success: true, orders: orders });
     } else {
         res.status(401).json({ success: false, message: "Invalid Admin Password" });
     }
 });
 
-// 4. Admin Order Confirmation
+// 4. Admin Order Confirmation (Updates status for customer to see)
 app.patch('/api/orders/:id', (req, res) => {
-    const adminPass = req.headers['admin-password'];
+    // We check the password sent in the body or headers for security
+    const { password } = req.body;
     
-    if (adminPass !== ADMIN_PASSWORD) {
+    if (password !== ADMIN_PASSWORD) {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -73,13 +75,14 @@ app.patch('/api/orders/:id', (req, res) => {
     
     if (order) {
         order.confirmed = true;
+        console.log(`Order ${orderId} confirmed by Admin`);
         return res.json({ success: true, message: "Order confirmed" });
     }
     
     res.status(404).json({ error: "Order not found" });
 });
 
-// Serve frontend for all non-API routes
+// Serve frontend
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
