@@ -2,101 +2,122 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+require('dotenv').config();
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-// Note: In Production (Render), set this via Environment Variables for security
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1234"; 
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-// Serves your index.html and assets from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory data store (Resets when server restarts)
+// In-memory data stores
 let orders = [];
+let users = []; // Stores { name, phone }
 
 /** * API Endpoints 
  */
 
-// 1. Place a new order
+// 1. User Registration
+app.post('/api/register', (req, res) => {
+    const { name, phone } = req.body;
+    
+    if (!name || !phone) {
+        return res.status(400).json({ error: "Name and Phone are required" });
+    }
+
+    const userExists = users.find(u => u.phone === phone);
+    if (userExists) {
+        return res.status(409).json({ error: "Phone number already registered" });
+    }
+
+    const newUser = { name, phone };
+    users.push(newUser);
+    console.log(`👤 New User Registered: ${name} (${phone})`);
+    res.status(201).json({ message: "Registration successful", user: newUser });
+});
+
+// 2. User Login (Credential Verification)
+app.post('/api/login', (req, res) => {
+    const { name, phone } = req.body;
+    const user = users.find(u => u.phone === phone && u.name.toLowerCase() === name.toLowerCase());
+
+    if (user) {
+        res.json({ success: true, user });
+    } else {
+        res.status(401).json({ success: false, message: "Invalid credentials or account does not exist" });
+    }
+});
+
+// 3. Place a new order (With Auth Check)
 app.post('/api/orders', (req, res) => {
     const { customer, phone, itemName, price } = req.body;
     
-    // Validation
-    if (!customer || !phone || !itemName) {
-        return res.status(400).json({ error: "Missing order details" });
+    // Server-side security check: Ensure the user actually exists
+    const validUser = users.find(u => u.phone === phone && u.name.toLowerCase() === customer.toLowerCase());
+    
+    if (!validUser) {
+        return res.status(403).json({ error: "Unauthorized: Please register/login first" });
     }
 
     const newOrder = { 
         id: Date.now(), 
-        customer, 
-        phone, 
+        customer: validUser.name, 
+        phone: validUser.phone, 
         itemName,
-        price: price || 0, // Store the price for the admin to see
+        price,
         confirmed: false,
         timestamp: new Date().toLocaleString('en-GB', { 
             day: '2-digit', month: 'short', year: 'numeric', 
-            hour: '2-digit', minute: '2-digit', second: '2-digit' 
+            hour: '2-digit', minute: '2-digit'
         }) 
     };
     
-    // Use unshift so the latest order always appears at the top [index 0]
     orders.unshift(newOrder); 
-    
-    console.log(`🛒 New Order: ${itemName} (GH₵${price}) - Customer: ${customer}`);
+    console.log(`🛒 Order Placed: ${itemName} by ${customer}`);
     res.status(201).json(newOrder);
 });
 
-// 2. Get orders for a specific customer (Phone-based tracking)
+// 4. Get personal orders
 app.get('/api/my-orders/:phone', (req, res) => {
-    const customerPhone = req.params.phone;
-    const myOrders = orders.filter(o => o.phone === customerPhone);
+    const myOrders = orders.filter(o => o.phone === req.params.phone);
     res.json(myOrders);
 });
 
-// 3. Admin Login & Dashboard Data Refresh
+// 5. Admin Verification
 app.post('/api/admin/verify', (req, res) => {
     const { password } = req.body;
-    
     if (password === ADMIN_PASSWORD) {
-        // Return all orders
-        res.json({ success: true, orders: orders });
+        res.json({ success: true, orders: orders, userCount: users.length });
     } else {
         res.status(401).json({ success: false, message: "Invalid Admin Password" });
     }
 });
 
-// 4. Admin Order Confirmation
+// 6. Admin Order Confirmation
 app.patch('/api/orders/:id', (req, res) => {
     const { password } = req.body;
-    
-    if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
+    if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
 
-    const orderId = parseInt(req.params.id);
-    const order = orders.find(o => o.id === orderId);
-    
+    const order = orders.find(o => o.id === parseInt(req.params.id));
     if (order) {
         order.confirmed = true;
-        console.log(`✅ Order ${orderId} confirmed.`);
-        return res.json({ success: true, message: "Order confirmed successfully" });
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: "Order not found" });
     }
-    
-    res.status(404).json({ error: "Order not found" });
 });
 
-// Catch-all route to serve index.html for any frontend navigation
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
     console.log(`-------------------------------------------`);
-    console.log(`⚡ VoltEdge Server Active: http://localhost:${PORT}`);
-    console.log(`🔒 Admin Mode: Enabled`);
+    console.log(`⚡ VoltEdge Backend: http://localhost:${PORT}`);
+    console.log(`👥 Database: Active (In-Memory)`);
     console.log(`-------------------------------------------`);
 });
