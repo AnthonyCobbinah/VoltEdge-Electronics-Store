@@ -38,20 +38,19 @@
         <div x-show="!user && view === 'shop'" x-cloak class="max-w-md mx-auto mt-12">
             <div class="bg-white p-8 rounded-[2rem] shadow-2xl border border-slate-200">
                 <div class="flex border-b mb-8">
-                    <button @click="authMode = 'login'" :class="authMode === 'login' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'" class="flex-1 pb-4 font-black uppercase text-xs tracking-widest transition-all border-b-2">Login</button>
-                    <button @click="authMode = 'register'" :class="authMode === 'register' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'" class="flex-1 pb-4 font-black uppercase text-xs tracking-widest transition-all border-b-2">Create Account</button>
+                    <button @click="authMode = 'login'" :class="authMode === 'login' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'" class="flex-1 pb-4 font-black uppercase text-xs tracking-widest border-b-2">Login</button>
+                    <button @click="authMode = 'register'" :class="authMode === 'register' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'" class="flex-1 pb-4 font-black uppercase text-xs tracking-widest border-b-2">Create Account</button>
                 </div>
-
                 <div class="space-y-5">
                     <div>
                         <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Full Name</label>
-                        <input type="text" x-model="authForm.name" placeholder="John Doe" class="w-full border-2 border-slate-50 p-4 rounded-2xl outline-none focus:border-blue-500 bg-slate-50 transition-all font-bold">
+                        <input type="text" x-model="authForm.name" class="w-full border-2 border-slate-50 p-4 rounded-2xl outline-none focus:border-blue-500 bg-slate-50 font-bold">
                     </div>
                     <div>
                         <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Phone Number</label>
-                        <input type="tel" x-model="authForm.phone" placeholder="024XXXXXXX" class="w-full border-2 border-slate-50 p-4 rounded-2xl outline-none focus:border-blue-500 bg-slate-50 transition-all font-bold">
+                        <input type="tel" x-model="authForm.phone" class="w-full border-2 border-slate-50 p-4 rounded-2xl outline-none focus:border-blue-500 bg-slate-50 font-bold">
                     </div>
-                    <button @click="handleAuth()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all" x-text="authMode === 'register' ? 'Register Account' : 'Login to Shop'"></button>
+                    <button @click="handleAuth()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg hover:bg-blue-700 active:scale-95 transition-all" x-text="authMode === 'register' ? 'Register Account' : 'Login to Shop'"></button>
                 </div>
             </div>
         </div>
@@ -61,13 +60,13 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
                     <template x-for="(item, index) in products" :key="index">
                         <div x-show="item.inStock" class="product-card bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-2xl transition-all group">
-                            <div class="bg-slate-50 h-52 flex items-center justify-center p-8 relative overflow-hidden">
+                            <div class="bg-slate-50 h-52 flex items-center justify-center p-8 relative">
                                 <img :src="item.image" :alt="item.name" class="hardware-img">
-                                <div class="absolute top-4 right-4 bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-xl" x-text="'GH₵ ' + item.price"></div>
+                                <div class="absolute top-4 right-4 bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full" x-text="'GH₵ ' + item.price"></div>
                             </div>
                             <div class="p-6 flex-grow flex flex-col justify-between">
                                 <div>
-                                    <p class="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1" x-text="item.category"></p>
+                                    <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1" x-text="item.category"></p>
                                     <h3 class="font-black text-slate-800 text-lg leading-tight mb-4" x-text="item.name"></h3>
                                 </div>
                                 <button @click="placeOrder(item)" class="w-full bg-slate-900 group-hover:bg-blue-600 text-white py-3 rounded-xl text-xs font-black transition-colors uppercase tracking-widest">Order Now</button>
@@ -78,22 +77,27 @@
 
                 <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-200">
                     <h3 class="font-black text-slate-900 mb-4 tracking-tighter uppercase text-xl">Leave a Comment</h3>
-                    <textarea x-model="commentInput" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-blue-500 font-medium mb-4" placeholder="How can we help you today?"></textarea>
+                    <textarea x-model="commentInput" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-blue-500 mb-4" placeholder="How can we help you today?"></textarea>
                     <button @click="submitComment()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition shadow-lg shadow-blue-100">Post Comment</button>
                 </div>
             </div>
             
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200 sticky top-24">
-                    <h3 class="font-black text-slate-900 mb-6 flex items-center justify-between">
-                        <span class="tracking-tighter uppercase">Recent Orders</span>
+                    <h3 class="font-black text-slate-900 mb-6 flex items-center justify-between uppercase">
+                        <span class="tracking-tighter">Recent Orders</span>
                         <span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-1 rounded-lg" x-text="myOrders.length"></span>
                     </h3>
                     <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                         <template x-for="o in myOrders" :key="o.id">
                             <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 relative overflow-hidden shadow-sm">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                                <div class="text-[11px] font-black text-slate-700 uppercase" x-text="o.itemName"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full" :class="o.confirmed ? 'bg-green-500' : 'bg-blue-500'"></div>
+                                <div class="flex justify-between items-start mb-1">
+                                    <div class="text-[11px] font-black text-slate-700 uppercase" x-text="o.itemName"></div>
+                                    <span :class="o.confirmed ? 'text-green-600 bg-green-100' : 'text-blue-600 bg-blue-100'" 
+                                          class="text-[7px] font-black px-1.5 py-0.5 rounded uppercase" 
+                                          x-text="o.confirmed ? 'Confirmed' : 'Awaiting'"></span>
+                                </div>
                                 <div class="flex justify-between items-center mt-2">
                                     <span class="text-[9px] font-mono text-slate-400" x-text="o.timestamp"></span>
                                     <span class="text-[9px] font-black text-blue-600" x-text="'GH₵ ' + o.price"></span>
@@ -115,9 +119,9 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
                     <div>
                         <h2 class="text-3xl font-black text-slate-900 tracking-tighter italic uppercase">Master Control</h2>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Customer Hardware Requests</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Hardware Requests</p>
                     </div>
-                    <button @click="view = 'shop'" class="bg-slate-100 px-6 py-2 rounded-xl text-slate-600 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition">Return to Store</button>
+                    <button @click="view = 'shop'" class="bg-slate-100 px-6 py-2 rounded-xl text-slate-600 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200">Return to Store</button>
                 </div>
                 
                 <div class="overflow-x-auto">
@@ -143,6 +147,12 @@
                                     </td>
                                     <td class="p-4 text-[10px] text-slate-400 font-mono" x-text="o.timestamp"></td>
                                     <td class="p-4 text-center flex justify-center gap-2">
+                                        <button @click="confirmOrder(o.id)" 
+                                                :disabled="o.confirmed"
+                                                :class="o.confirmed ? 'bg-green-100 text-green-600 border-green-200' : 'bg-blue-600 text-white shadow-lg shadow-blue-100'"
+                                                class="px-3 py-1 rounded-lg text-[10px] font-black uppercase border transition-all"
+                                                x-text="o.confirmed ? 'Confirmed' : 'Confirm Order'">
+                                        </button>
                                         <button @click="deleteOrder(o.id)" class="bg-red-50 text-red-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-red-100 hover:bg-red-600 hover:text-white transition-all">Delete</button>
                                     </td>
                                 </tr>
@@ -154,7 +164,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-200">
-                    <h3 class="font-black text-slate-900 mb-6 uppercase tracking-tighter">Inventory Stock Status</h3>
+                    <h3 class="font-black text-slate-900 mb-6 uppercase tracking-tighter">Inventory Control</h3>
                     <div class="space-y-3">
                         <template x-for="(item, index) in products" :key="index">
                             <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
@@ -188,8 +198,8 @@
     </div>
 
     <div x-show="showAdminModal" x-cloak class="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm border-t-8 border-blue-600">
-            <h3 class="font-black text-2xl mb-2 text-center text-slate-900 tracking-tighter uppercase">Admin Secure</h3>
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm border-t-8 border-blue-600 text-center">
+            <h3 class="font-black text-2xl mb-2 text-slate-900 tracking-tighter uppercase">Secure Access</h3>
             <input type="password" x-model="adminPassInput" placeholder="••••" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500 font-black">
             <div class="flex gap-3">
                 <button @click="showAdminModal = false" class="flex-1 bg-slate-100 py-4 rounded-2xl font-black text-slate-400 text-[10px] uppercase">Abort</button>
@@ -217,13 +227,10 @@
 
                 init() {
                     const session = localStorage.getItem('voltEdgeSession');
-                    if(session) {
-                        this.user = JSON.parse(session);
-                    }
-                    this.refreshData();
-                    // Load stock preferences from local storage if they exist
+                    if(session) this.user = JSON.parse(session);
                     const savedProducts = localStorage.getItem('voltEdgeProducts');
                     if(savedProducts) this.products = JSON.parse(savedProducts);
+                    this.refreshData();
                 },
 
                 refreshData() {
@@ -238,7 +245,6 @@
                 handleAuth() {
                     if(!this.authForm.name || !this.authForm.phone) return alert("Incomplete details!");
                     const phoneKey = this.authForm.phone.trim();
-                    
                     if(this.authMode === 'register') {
                         const userData = { name: this.authForm.name.trim(), phone: phoneKey };
                         localStorage.setItem(`user_${phoneKey}`, JSON.stringify(userData));
@@ -250,9 +256,7 @@
                             this.user = JSON.parse(saved);
                             localStorage.setItem('voltEdgeSession', JSON.stringify(this.user));
                             this.refreshData();
-                        } else {
-                            alert("Account not found.");
-                        }
+                        } else { alert("Account not found."); }
                     }
                 },
 
@@ -269,12 +273,23 @@
                         phone: this.user.phone,
                         itemName: item.name,
                         price: item.price,
+                        confirmed: false,
                         timestamp: new Date().toLocaleString()
                     };
                     orders.unshift(newOrder);
                     localStorage.setItem('voltEdgeOrders', JSON.stringify(orders));
                     this.refreshData();
-                    alert(`Order Logged: ${item.name}`);
+                    alert(`Order Logged!`);
+                },
+
+                confirmOrder(id) {
+                    let orders = JSON.parse(localStorage.getItem('voltEdgeOrders') || '[]');
+                    const idx = orders.findIndex(o => o.id === id);
+                    if(idx !== -1) {
+                        orders[idx].confirmed = true;
+                        localStorage.setItem('voltEdgeOrders', JSON.stringify(orders));
+                        this.refreshData();
+                    }
                 },
 
                 deleteOrder(id) {
@@ -287,7 +302,6 @@
                 toggleStock(index) {
                     this.products[index].inStock = !this.products[index].inStock;
                     localStorage.setItem('voltEdgeProducts', JSON.stringify(this.products));
-                    alert(`${this.products[index].name} is now ${this.products[index].inStock ? 'In Stock' : 'Out of Stock'}`);
                 },
 
                 submitComment() {
@@ -297,7 +311,7 @@
                     localStorage.setItem('voltEdgeComments', JSON.stringify(comments));
                     this.commentInput = '';
                     this.refreshData();
-                    alert("Comment shared with Admin!");
+                    alert("Sent!");
                 },
 
                 deleteComment(index) {
@@ -313,9 +327,7 @@
                         this.showAdminModal = false;
                         this.adminPassInput = '';
                         this.refreshData();
-                    } else {
-                        alert("ACCESS DENIED");
-                    }
+                    } else { alert("ACCESS DENIED"); }
                 }
             }
         }
