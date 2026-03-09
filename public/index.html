@@ -11,6 +11,8 @@
         .hardware-img { width: 100%; height: 180px; object-fit: contain; transition: transform 0.4s ease; }
         .product-card:hover .hardware-img { transform: scale(1.08); }
         .glass-nav { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-900" x-data="voltEdgeApp()" x-init="init()">
@@ -49,55 +51,58 @@
                         <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Phone Number</label>
                         <input type="tel" x-model="authForm.phone" placeholder="024XXXXXXX" class="w-full border-2 border-slate-50 p-4 rounded-2xl outline-none focus:border-blue-500 bg-slate-50 transition-all font-bold">
                     </div>
-                    
                     <button @click="handleAuth()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all" x-text="authMode === 'register' ? 'Register Account' : 'Login to Shop'"></button>
-                    
-                    <p class="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter" x-text="authMode === 'register' ? 'Ensure phone number is correct for tracking' : 'Enter the exact details used during registration'"></p>
                 </div>
             </div>
         </div>
 
         <div x-show="user && view === 'shop'" x-cloak class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                <template x-for="item in products" :key="item.name">
-                    <div class="product-card bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-2xl transition-all group">
-                        <div class="bg-slate-50 h-52 flex items-center justify-center p-8 relative overflow-hidden">
-                            <img :src="item.image" :alt="item.name" class="hardware-img">
-                            <div class="absolute top-4 right-4 bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-xl" x-text="'GH₵ ' + item.price"></div>
-                        </div>
-                        <div class="p-6 flex-grow flex flex-col justify-between">
-                            <div>
-                                <p class="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1" x-text="item.category"></p>
-                                <h3 class="font-black text-slate-800 text-lg leading-tight mb-4" x-text="item.name"></h3>
+            <div class="lg:col-span-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
+                    <template x-for="(item, index) in products" :key="index">
+                        <div x-show="item.inStock" class="product-card bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-2xl transition-all group">
+                            <div class="bg-slate-50 h-52 flex items-center justify-center p-8 relative overflow-hidden">
+                                <img :src="item.image" :alt="item.name" class="hardware-img">
+                                <div class="absolute top-4 right-4 bg-slate-900 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-xl" x-text="'GH₵ ' + item.price"></div>
                             </div>
-                            <button @click="placeOrder(item)" class="w-full bg-slate-900 group-hover:bg-blue-600 text-white py-3 rounded-xl text-xs font-black transition-colors uppercase tracking-widest">Order Now</button>
+                            <div class="p-6 flex-grow flex flex-col justify-between">
+                                <div>
+                                    <p class="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1" x-text="item.category"></p>
+                                    <h3 class="font-black text-slate-800 text-lg leading-tight mb-4" x-text="item.name"></h3>
+                                </div>
+                                <button @click="placeOrder(item)" class="w-full bg-slate-900 group-hover:bg-blue-600 text-white py-3 rounded-xl text-xs font-black transition-colors uppercase tracking-widest">Order Now</button>
+                            </div>
                         </div>
-                    </div>
-                </template>
+                    </template>
+                </div>
+
+                <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-200">
+                    <h3 class="font-black text-slate-900 mb-4 tracking-tighter uppercase text-xl">Leave a Comment</h3>
+                    <textarea x-model="commentInput" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-blue-500 font-medium mb-4" placeholder="How can we help you today?"></textarea>
+                    <button @click="submitComment()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition shadow-lg shadow-blue-100">Post Comment</button>
+                </div>
             </div>
             
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200 sticky top-24">
                     <h3 class="font-black text-slate-900 mb-6 flex items-center justify-between">
-                        <span class="tracking-tighter">YOUR ORDERS</span>
+                        <span class="tracking-tighter uppercase">Recent Orders</span>
                         <span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-1 rounded-lg" x-text="myOrders.length"></span>
                     </h3>
                     <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                         <template x-for="o in myOrders" :key="o.id">
                             <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 relative overflow-hidden shadow-sm">
-                                <div :class="o.confirmed ? 'bg-green-500' : 'bg-amber-500'" class="absolute top-0 left-0 w-1 h-full"></div>
-                                <div class="flex justify-between items-start mb-2">
-                                    <span class="text-[11px] font-black text-slate-700 uppercase leading-tight" x-text="o.itemName"></span>
-                                </div>
-                                <div class="flex justify-between items-center">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                                <div class="text-[11px] font-black text-slate-700 uppercase" x-text="o.itemName"></div>
+                                <div class="flex justify-between items-center mt-2">
                                     <span class="text-[9px] font-mono text-slate-400" x-text="o.timestamp"></span>
-                                    <span :class="o.confirmed ? 'text-green-600' : 'text-amber-600'" class="text-[8px] font-black uppercase tracking-widest" x-text="o.confirmed ? 'READY' : 'PENDING'"></span>
+                                    <span class="text-[9px] font-black text-blue-600" x-text="'GH₵ ' + o.price"></span>
                                 </div>
                             </div>
                         </template>
                         <template x-if="myOrders.length === 0">
                             <div class="text-center py-10">
-                                <p class="text-slate-300 text-[10px] font-black uppercase">No orders found</p>
+                                <p class="text-slate-300 text-[10px] font-black uppercase">No recent orders</p>
                             </div>
                         </template>
                     </div>
@@ -105,56 +110,90 @@
             </div>
         </div>
 
-        <div x-show="view === 'admin'" x-cloak class="max-w-6xl mx-auto bg-white p-8 rounded-[2.5rem] shadow-2xl border border-slate-200">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-                <div>
-                    <h2 class="text-3xl font-black text-slate-900 tracking-tighter italic uppercase">Master Control</h2>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Pending Hardware Requests</p>
+        <div x-show="view === 'admin'" x-cloak class="max-w-6xl mx-auto space-y-8">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+                    <div>
+                        <h2 class="text-3xl font-black text-slate-900 tracking-tighter italic uppercase">Master Control</h2>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Customer Hardware Requests</p>
+                    </div>
+                    <button @click="view = 'shop'" class="bg-slate-100 px-6 py-2 rounded-xl text-slate-600 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition">Return to Store</button>
                 </div>
-                <button @click="view = 'shop'" class="bg-slate-100 px-6 py-2 rounded-xl text-slate-600 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition">Return to Store</button>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="text-[10px] text-slate-400 uppercase tracking-widest border-b-2">
-                            <th class="p-4">Customer</th>
-                            <th class="p-4">Phone</th>
-                            <th class="p-4">Part Details</th>
-                            <th class="p-4">Time</th>
-                            <th class="p-4 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                        <template x-for="o in allOrders" :key="o.id">
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="p-4 font-black text-slate-800 uppercase text-xs" x-text="o.customer"></td>
-                                <td class="p-4 text-xs font-mono text-blue-600" x-text="o.phone"></td>
-                                <td class="p-4">
-                                    <span class="font-bold text-[11px] text-slate-600 uppercase" x-text="o.itemName"></span>
-                                    <div class="text-[9px] text-slate-400 font-bold" x-text="'GH₵ ' + o.price"></div>
-                                </td>
-                                <td class="p-4 text-[10px] text-slate-400 font-mono" x-text="o.timestamp"></td>
-                                <td class="p-4 text-center">
-                                    <button x-show="!o.confirmed" @click="confirmOrder(o.id)" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-black hover:bg-blue-700 shadow-lg shadow-blue-100 uppercase transition-all">Approve</button>
-                                    <span x-show="o.confirmed" class="text-green-500 font-black text-[10px] tracking-widest uppercase italic italic">Approved ✓</span>
-                                </td>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-[10px] text-slate-400 uppercase tracking-widest border-b-2">
+                                <th class="p-4">Customer</th>
+                                <th class="p-4">Part Details</th>
+                                <th class="p-4">Time</th>
+                                <th class="p-4 text-center">Manage</th>
                             </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <template x-for="o in allOrders" :key="o.id">
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-4">
+                                        <div class="font-black text-slate-800 uppercase text-xs" x-text="o.customer"></div>
+                                        <div class="text-[10px] font-mono text-blue-600" x-text="o.phone"></div>
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="font-bold text-[11px] text-slate-600 uppercase" x-text="o.itemName"></div>
+                                        <div class="text-[9px] text-slate-400 font-bold" x-text="'GH₵ ' + o.price"></div>
+                                    </td>
+                                    <td class="p-4 text-[10px] text-slate-400 font-mono" x-text="o.timestamp"></td>
+                                    <td class="p-4 text-center flex justify-center gap-2">
+                                        <button @click="deleteOrder(o.id)" class="bg-red-50 text-red-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-red-100 hover:bg-red-600 hover:text-white transition-all">Delete</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-200">
+                    <h3 class="font-black text-slate-900 mb-6 uppercase tracking-tighter">Inventory Stock Status</h3>
+                    <div class="space-y-3">
+                        <template x-for="(item, index) in products" :key="index">
+                            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                                <span class="text-xs font-bold text-slate-700" x-text="item.name"></span>
+                                <button @click="toggleStock(index)" 
+                                    :class="item.inStock ? 'bg-green-100 text-green-600' : 'bg-red-600 text-white'"
+                                    class="text-[9px] px-3 py-1 rounded font-black uppercase transition-all"
+                                    x-text="item.inStock ? 'In Stock' : 'Out of Stock'">
+                                </button>
+                            </div>
                         </template>
-                    </tbody>
-                </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-200">
+                    <h3 class="font-black text-slate-900 mb-6 uppercase tracking-tighter">Customer Feedback</h3>
+                    <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <template x-for="(c, index) in comments" :key="index">
+                            <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-[10px] font-black text-blue-600 uppercase" x-text="c.user"></span>
+                                    <button @click="deleteComment(index)" class="text-red-400 text-[10px] font-black">DELETE</button>
+                                </div>
+                                <p class="text-xs text-slate-600 font-medium" x-text="c.text"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <div x-show="showAdminModal" x-cloak class="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
         <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm border-t-8 border-blue-600">
-            <h3 class="font-black text-2xl mb-2 text-center text-slate-900 tracking-tighter">ADMIN SECURE</h3>
-            <p class="text-[10px] text-slate-400 text-center mb-8 font-black uppercase tracking-widest">Entry Authorization Required</p>
-            <input type="password" x-model="adminPassInput" placeholder="••••" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl tracking-[0.5em] outline-none focus:border-blue-500 font-black">
+            <h3 class="font-black text-2xl mb-2 text-center text-slate-900 tracking-tighter uppercase">Admin Secure</h3>
+            <input type="password" x-model="adminPassInput" placeholder="••••" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-6 text-center text-3xl outline-none focus:border-blue-500 font-black">
             <div class="flex gap-3">
-                <button @click="showAdminModal = false" class="flex-1 bg-slate-100 py-4 rounded-2xl font-black text-slate-400 text-[10px] uppercase tracking-widest">Abort</button>
-                <button @click="adminLogin()" class="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">Confirm</button>
+                <button @click="showAdminModal = false" class="flex-1 bg-slate-100 py-4 rounded-2xl font-black text-slate-400 text-[10px] uppercase">Abort</button>
+                <button @click="adminLogin()" class="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase shadow-xl">Confirm</button>
             </div>
         </div>
     </div>
@@ -165,57 +204,54 @@
                 view: 'shop', authMode: 'login', user: null,
                 authForm: {name: '', phone: ''},
                 showAdminModal: false, adminPassInput: '',
-                myOrders: [], allOrders: [],
+                myOrders: [], allOrders: [], comments: [],
+                commentInput: '',
                 products: [
-                    {name:'256GB Internal SATA SSD', price:320, category: 'Storage', image: 'https://images.unsplash.com/photo-1597872200919-012d9ec0410a?w=600&q=80'},
-                    {name:'512GB Internal SATA SSD', price:620, category: 'Storage', image: 'https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=600&q=80'},
-                    {name:'512GB Mechanical HDD 3.5"', price:250, category: 'Storage', image: 'https://images.unsplash.com/photo-1628557118391-56cd72d3e59a?w=600&q=80'},
-                    {name:'Li-Ion Laptop Battery Pack', price:390, category: 'Power', image: 'https://images.unsplash.com/photo-1594235372134-909244439c14?w=600&q=80'},
-                    {name:'8GB DDR4 Desktop Memory', price:280, category: 'RAM', image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?w=600&q=80'},
-                    {name:'HP Business Motherboard', price:1100, category: 'Mainboard', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80'}
+                    {name:'256GB Internal SATA SSD', price:320, category: 'Storage', inStock: true, image: 'https://images.unsplash.com/photo-1597872200919-012d9ec0410a?w=600&q=80'},
+                    {name:'512GB Internal SATA SSD', price:620, category: 'Storage', inStock: true, image: 'https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=600&q=80'},
+                    {name:'512GB Mechanical HDD 3.5"', price:250, category: 'Storage', inStock: true, image: 'https://images.unsplash.com/photo-1628557118391-56cd72d3e59a?w=600&q=80'},
+                    {name:'Li-Ion Laptop Battery Pack', price:390, category: 'Power', inStock: true, image: 'https://images.unsplash.com/photo-1594235372134-909244439c14?w=600&q=80'},
+                    {name:'8GB DDR4 Desktop Memory', price:280, category: 'RAM', inStock: true, image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?w=600&q=80'},
+                    {name:'HP Business Motherboard', price:1100, category: 'Mainboard', inStock: true, image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80'}
                 ],
 
                 init() {
                     const session = localStorage.getItem('voltEdgeSession');
                     if(session) {
                         this.user = JSON.parse(session);
-                        this.loadOrders();
                     }
-                    setInterval(() => this.loadOrders(), 3000);
+                    this.refreshData();
+                    // Load stock preferences from local storage if they exist
+                    const savedProducts = localStorage.getItem('voltEdgeProducts');
+                    if(savedProducts) this.products = JSON.parse(savedProducts);
+                },
+
+                refreshData() {
+                    const orders = JSON.parse(localStorage.getItem('voltEdgeOrders') || '[]');
+                    this.allOrders = orders;
+                    if(this.user) {
+                        this.myOrders = orders.filter(o => o.phone === this.user.phone);
+                    }
+                    this.comments = JSON.parse(localStorage.getItem('voltEdgeComments') || '[]');
                 },
 
                 handleAuth() {
                     if(!this.authForm.name || !this.authForm.phone) return alert("Incomplete details!");
-                    
-                    const nameKey = this.authForm.name.trim().toLowerCase();
                     const phoneKey = this.authForm.phone.trim();
-
+                    
                     if(this.authMode === 'register') {
-                        // Registration logic
-                        if(localStorage.getItem(`user_${phoneKey}`)) {
-                            alert("This phone number is already registered. Please Login.");
-                            this.authMode = 'login';
-                            return;
-                        }
                         const userData = { name: this.authForm.name.trim(), phone: phoneKey };
                         localStorage.setItem(`user_${phoneKey}`, JSON.stringify(userData));
-                        alert("Account Created! You can now Login.");
+                        alert("Account Created!");
                         this.authMode = 'login';
                     } else {
-                        // Login logic (Forces correct credentials)
                         const saved = localStorage.getItem(`user_${phoneKey}`);
                         if(saved) {
-                            const parsed = JSON.parse(saved);
-                            if(parsed.name.toLowerCase() === nameKey) {
-                                this.user = parsed;
-                                localStorage.setItem('voltEdgeSession', JSON.stringify(this.user));
-                                this.loadOrders();
-                            } else {
-                                alert("Invalid Name for this Phone Number!");
-                            }
+                            this.user = JSON.parse(saved);
+                            localStorage.setItem('voltEdgeSession', JSON.stringify(this.user));
+                            this.refreshData();
                         } else {
-                            alert("Account not found. Please Register.");
-                            this.authMode = 'register';
+                            alert("Account not found.");
                         }
                     }
                 },
@@ -225,63 +261,61 @@
                     location.reload();
                 },
 
-                async loadOrders() {
-                    // Fetching from backend (keep the server.js as discussed before)
-                    try {
-                        const res = await fetch(`/api/my-orders/${this.user?.phone || 'none'}`);
-                        this.myOrders = await res.json();
-                        
-                        if(this.view === 'admin') {
-                            const adminRes = await fetch('/api/admin/verify', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({ password: '1234' }) 
-                            });
-                            const data = await adminRes.json();
-                            if(data.success) this.allOrders = data.orders;
-                        }
-                    } catch(e) { console.log("Server not active yet"); }
-                },
-
-                async placeOrder(item) {
-                    await fetch('/api/orders', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            customer: this.user.name,
-                            phone: this.user.phone,
-                            itemName: item.name,
-                            price: item.price
-                        })
-                    });
-                    this.loadOrders();
+                placeOrder(item) {
+                    const orders = JSON.parse(localStorage.getItem('voltEdgeOrders') || '[]');
+                    const newOrder = {
+                        id: Date.now(),
+                        customer: this.user.name,
+                        phone: this.user.phone,
+                        itemName: item.name,
+                        price: item.price,
+                        timestamp: new Date().toLocaleString()
+                    };
+                    orders.unshift(newOrder);
+                    localStorage.setItem('voltEdgeOrders', JSON.stringify(orders));
+                    this.refreshData();
                     alert(`Order Logged: ${item.name}`);
                 },
 
-                async adminLogin() {
-                    const res = await fetch('/api/admin/verify', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ password: this.adminPassInput })
-                    });
-                    const data = await res.json();
-                    if(data.success) {
-                        this.allOrders = data.orders;
+                deleteOrder(id) {
+                    let orders = JSON.parse(localStorage.getItem('voltEdgeOrders') || '[]');
+                    orders = orders.filter(o => o.id !== id);
+                    localStorage.setItem('voltEdgeOrders', JSON.stringify(orders));
+                    this.refreshData();
+                },
+
+                toggleStock(index) {
+                    this.products[index].inStock = !this.products[index].inStock;
+                    localStorage.setItem('voltEdgeProducts', JSON.stringify(this.products));
+                    alert(`${this.products[index].name} is now ${this.products[index].inStock ? 'In Stock' : 'Out of Stock'}`);
+                },
+
+                submitComment() {
+                    if(!this.commentInput) return;
+                    const comments = JSON.parse(localStorage.getItem('voltEdgeComments') || '[]');
+                    comments.unshift({ user: this.user.name, text: this.commentInput });
+                    localStorage.setItem('voltEdgeComments', JSON.stringify(comments));
+                    this.commentInput = '';
+                    this.refreshData();
+                    alert("Comment shared with Admin!");
+                },
+
+                deleteComment(index) {
+                    let comments = JSON.parse(localStorage.getItem('voltEdgeComments') || '[]');
+                    comments.splice(index, 1);
+                    localStorage.setItem('voltEdgeComments', JSON.stringify(comments));
+                    this.refreshData();
+                },
+
+                adminLogin() {
+                    if(this.adminPassInput === '1234') {
                         this.view = 'admin';
                         this.showAdminModal = false;
                         this.adminPassInput = '';
+                        this.refreshData();
                     } else {
                         alert("ACCESS DENIED");
                     }
-                },
-
-                async confirmOrder(id) {
-                    await fetch(`/api/orders/${id}`, {
-                        method: 'PATCH',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ password: '1234' }) 
-                    });
-                    this.loadOrders();
                 }
             }
         }
