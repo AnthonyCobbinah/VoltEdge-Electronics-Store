@@ -16,98 +16,119 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory data stores
 let orders = [];
-let users = []; // Stores { name, phone }
+let users = []; 
+let comments = []; // New: Stores { user, text, timestamp }
+let productStock = {}; // New: Stores { productId/index: boolean }
 
-/** * API Endpoints 
+/**
+ * API Endpoints 
  */
 
-// 1. User Registration
+// 1. User Registration & Login (Unified with HTML logic)
 app.post('/api/register', (req, res) => {
     const { name, phone } = req.body;
+    if (!name || !phone) return res.status(400).json({ error: "Missing details" });
     
-    if (!name || !phone) {
-        return res.status(400).json({ error: "Name and Phone are required" });
-    }
-
-    const userExists = users.find(u => u.phone === phone);
-    if (userExists) {
-        return res.status(409).json({ error: "Phone number already registered" });
+    if (users.find(u => u.phone === phone)) {
+        return res.status(409).json({ error: "Phone already exists" });
     }
 
     const newUser = { name, phone };
     users.push(newUser);
-    console.log(`👤 New User Registered: ${name} (${phone})`);
-    res.status(201).json({ message: "Registration successful", user: newUser });
+    res.status(201).json({ success: true, user: newUser });
 });
 
-// 2. User Login (Credential Verification)
 app.post('/api/login', (req, res) => {
     const { name, phone } = req.body;
     const user = users.find(u => u.phone === phone && u.name.toLowerCase() === name.toLowerCase());
-
     if (user) {
         res.json({ success: true, user });
     } else {
-        res.status(401).json({ success: false, message: "Invalid credentials or account does not exist" });
+        res.status(401).json({ success: false });
     }
 });
 
-// 3. Place a new order (With Auth Check)
+// 2. Orders: Place, Get, and Delete
 app.post('/api/orders', (req, res) => {
     const { customer, phone, itemName, price } = req.body;
-    
-    // Server-side security check: Ensure the user actually exists
-    const validUser = users.find(u => u.phone === phone && u.name.toLowerCase() === customer.toLowerCase());
-    
-    if (!validUser) {
-        return res.status(403).json({ error: "Unauthorized: Please register/login first" });
-    }
-
     const newOrder = { 
         id: Date.now(), 
-        customer: validUser.name, 
-        phone: validUser.phone, 
-        itemName,
+        customer, 
+        phone, 
+        itemName, 
         price,
-        confirmed: false,
-        timestamp: new Date().toLocaleString('en-GB', { 
-            day: '2-digit', month: 'short', year: 'numeric', 
-            hour: '2-digit', minute: '2-digit'
-        }) 
+        timestamp: new Date().toLocaleString()
     };
-    
     orders.unshift(newOrder); 
-    console.log(`🛒 Order Placed: ${itemName} by ${customer}`);
     res.status(201).json(newOrder);
 });
 
-// 4. Get personal orders
 app.get('/api/my-orders/:phone', (req, res) => {
     const myOrders = orders.filter(o => o.phone === req.params.phone);
     res.json(myOrders);
 });
 
-// 5. Admin Verification
+// Delete Order (Admin only)
+app.delete('/api/orders/:id', (req, res) => {
+    const { password } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
+    
+    orders = orders.filter(o => o.id !== parseInt(req.params.id));
+    res.json({ success: true });
+});
+
+// 3. Comments (Feedback)
+app.post('/api/comments', (req, res) => {
+    const { user, text } = req.body;
+    if (!text) return res.status(400).send();
+    
+    const newComment = { 
+        id: Date.now(), 
+        user, 
+        text, 
+        timestamp: new Date().toLocaleString() 
+    };
+    comments.unshift(newComment);
+    res.status(201).json(newComment);
+});
+
+app.get('/api/comments', (req, res) => {
+    res.json(comments);
+});
+
+app.delete('/api/comments/:id', (req, res) => {
+    const { password } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
+    
+    comments = comments.filter(c => c.id !== parseInt(req.params.id));
+    res.json({ success: true });
+});
+
+// 4. Stock Management
+app.get('/api/stock', (req, res) => {
+    res.json(productStock);
+});
+
+app.patch('/api/stock', (req, res) => {
+    const { password, productIndex, inStock } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
+    
+    productStock[productIndex] = inStock;
+    res.json({ success: true });
+});
+
+// 5. Admin Dashboard Verification
 app.post('/api/admin/verify', (req, res) => {
     const { password } = req.body;
     if (password === ADMIN_PASSWORD) {
-        res.json({ success: true, orders: orders, userCount: users.length });
+        res.json({ 
+            success: true, 
+            orders: orders, 
+            comments: comments, 
+            stock: productStock 
+        });
     } else {
-        res.status(401).json({ success: false, message: "Invalid Admin Password" });
-    }
-});
-
-// 6. Admin Order Confirmation
-app.patch('/api/orders/:id', (req, res) => {
-    const { password } = req.body;
-    if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
-
-    const order = orders.find(o => o.id === parseInt(req.params.id));
-    if (order) {
-        order.confirmed = true;
-        res.json({ success: true });
-    } else {
-        res.status(404).json({ error: "Order not found" });
+        res.status(401).json({ success: false });
     }
 });
 
@@ -116,8 +137,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`-------------------------------------------`);
-    console.log(`⚡ VoltEdge Backend: http://localhost:${PORT}`);
-    console.log(`👥 Database: Active (In-Memory)`);
-    console.log(`-------------------------------------------`);
+    console.log(`⚡ VoltEdge Backend running on port ${PORT}`);
 });
