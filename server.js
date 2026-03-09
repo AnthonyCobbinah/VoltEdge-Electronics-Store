@@ -17,14 +17,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 // In-memory data stores
 let orders = [];
 let users = []; 
-let comments = []; // New: Stores { user, text, timestamp }
-let productStock = {}; // New: Stores { productId/index: boolean }
+let comments = []; 
+let productStock = {}; 
 
 /**
  * API Endpoints 
  */
 
-// 1. User Registration & Login (Unified with HTML logic)
+// 1. User Registration & Login
 app.post('/api/register', (req, res) => {
     const { name, phone } = req.body;
     if (!name || !phone) return res.status(400).json({ error: "Missing details" });
@@ -48,7 +48,7 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// 2. Orders: Place, Get, and Delete
+// 2. Orders: Place, Get, Confirm, and Delete
 app.post('/api/orders', (req, res) => {
     const { customer, phone, itemName, price } = req.body;
     const newOrder = { 
@@ -57,6 +57,7 @@ app.post('/api/orders', (req, res) => {
         phone, 
         itemName, 
         price,
+        confirmed: false, // NEW: Matches HTML logic
         timestamp: new Date().toLocaleString()
     };
     orders.unshift(newOrder); 
@@ -68,7 +69,20 @@ app.get('/api/my-orders/:phone', (req, res) => {
     res.json(myOrders);
 });
 
-// Delete Order (Admin only)
+// NEW: Confirm Order (Admin only)
+app.patch('/api/orders/:id/confirm', (req, res) => {
+    const { password } = req.body;
+    if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
+    
+    const order = orders.find(o => o.id === parseInt(req.params.id));
+    if (order) {
+        order.confirmed = true;
+        res.json({ success: true, order });
+    } else {
+        res.status(404).json({ error: "Order not found" });
+    }
+});
+
 app.delete('/api/orders/:id', (req, res) => {
     const { password } = req.body;
     if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
@@ -90,10 +104,6 @@ app.post('/api/comments', (req, res) => {
     };
     comments.unshift(newComment);
     res.status(201).json(newComment);
-});
-
-app.get('/api/comments', (req, res) => {
-    res.json(comments);
 });
 
 app.delete('/api/comments/:id', (req, res) => {
